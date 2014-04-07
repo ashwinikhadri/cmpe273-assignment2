@@ -78,6 +78,11 @@ public class BookRepository implements BookRepositoryInterface {
 	return newBook;
     }
 
+    public void addNewBook (Book newBook){
+    	checkNotNull(newBook, "newBook instance must not be null");
+    	// Finally, save the new book into the map
+    	bookInMemoryMap.putIfAbsent(newBook.getIsbn(), newBook);
+    }
     /**
      * @see edu.sjsu.cmpe.library.repository.BookRepositoryInterface#getBookByISBN(java.lang.Long)
      */

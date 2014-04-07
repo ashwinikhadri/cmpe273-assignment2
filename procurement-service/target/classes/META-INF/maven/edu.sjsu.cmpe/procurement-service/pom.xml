@@ -4,9 +4,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>edu.sjsu.cmpe</groupId>
-	<artifactId>library</artifactId>
+	<artifactId>procurement-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>CMPE 273 RESTful Library Service</name>
+	<name>Procurement Service Scheduler</name>
 
 	<properties>
 		<dropwizard.version>0.6.2</dropwizard.version>
@@ -30,11 +30,13 @@
 			<artifactId>dropwizard-core</artifactId>
 			<version>${dropwizard.version}</version>
 		</dependency>
+		<!-- Dropwizard jobs from local build -->
 		<dependency>
-			<groupId>com.yammer.dropwizard</groupId>
-			<artifactId>dropwizard-views</artifactId>
-			<version>${dropwizard.version}</version>
+			<groupId>de.spinscale.dropwizard</groupId>
+			<artifactId>dropwizard-jobs</artifactId>
+			<version>1.0-SNAPSHOT</version>
 		</dependency>
+		<!-- STOMP JMS Client -->
 		<dependency>
 			<groupId>org.apache.geronimo.specs</groupId>
 			<artifactId>geronimo-jms_1.1_spec</artifactId>
@@ -44,6 +46,12 @@
 			<groupId>org.fusesource.stompjms</groupId>
 			<artifactId>stompjms-client</artifactId>
 			<version>1.13</version>
+		</dependency>
+		<!-- Jersey Client -->
+		<dependency>
+			<groupId>com.yammer.dropwizard</groupId>
+            <artifactId>dropwizard-client</artifactId>
+            <version>${dropwizard.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -110,7 +118,7 @@
 									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>edu.sjsu.cmpe.library.LibraryService</mainClass>
+									<mainClass>edu.sjsu.cmpe.procurement.ProcurementService</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>

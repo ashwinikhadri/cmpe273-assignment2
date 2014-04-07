@@ -1,5 +1,12 @@
 package edu.sjsu.cmpe.library.api.resources;
 
+import javax.jms.Connection;
+import javax.jms.DeliveryMode;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -14,11 +21,15 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.fusesource.stomp.jms.StompJmsConnectionFactory;
+import org.fusesource.stomp.jms.StompJmsDestination;
+
 import com.yammer.dropwizard.jersey.params.LongParam;
 import com.yammer.metrics.annotation.Timed;
 
 import edu.sjsu.cmpe.library.domain.Book;
 import edu.sjsu.cmpe.library.domain.Book.Status;
+import edu.sjsu.cmpe.library.domain.BookOrders;
 import edu.sjsu.cmpe.library.dto.BookDto;
 import edu.sjsu.cmpe.library.dto.BooksDto;
 import edu.sjsu.cmpe.library.dto.LinkDto;
@@ -30,15 +41,16 @@ import edu.sjsu.cmpe.library.repository.BookRepositoryInterface;
 public class BookResource {
     /** bookRepository instance */
     private final BookRepositoryInterface bookRepository;
-
+    private String libraryName;
     /**
      * BookResource constructor
      * 
      * @param bookRepository
      *            a BookRepository instance
      */
-    public BookResource(BookRepositoryInterface bookRepository) {
+    public BookResource(BookRepositoryInterface bookRepository , String libraryName) {
 	this.bookRepository = bookRepository;
+	this.libraryName = libraryName;
     }
 
     @GET
@@ -85,9 +97,15 @@ public class BookResource {
     @Path("/{isbn}")
     @Timed(name = "update-book-status")
     public Response updateBookStatus(@PathParam("isbn") LongParam isbn,
-	    @DefaultValue("available") @QueryParam("status") Status status) {
+	    @DefaultValue("available") @QueryParam("status") Status status) throws JMSException {
 	Book book = bookRepository.getBookByISBN(isbn.get());
 	book.setStatus(status);
+
+	//Update Status
+
+	if (status.equals(Status.lost)){
+		createNewBookOrder(isbn);
+	}	
 
 	BookDto bookResponse = new BookDto(book);
 	String location = "/books/" + book.getIsbn();
@@ -96,7 +114,52 @@ public class BookResource {
 	return Response.status(200).entity(bookResponse).build();
     }
 
-    @DELETE
+    private void createNewBookOrder(LongParam isbn) throws JMSException {
+		// TODO Auto-generated method stub
+
+    	String user = env("APOLLO_USER", "admin");
+    	String password = env("APOLLO_PASSWORD", "password");
+    	String host = env("APOLLO_HOST", "54.215.133.131");
+    	int port = Integer.parseInt(env("APOLLO_PORT", "61613"));
+    	String queue = "/queue/67921.book.orders";
+    	String destination = arg(0, queue);
+
+    	StompJmsConnectionFactory factory = new StompJmsConnectionFactory();
+    	factory.setBrokerURI("tcp://" + host + ":" + port);
+
+    	Connection connection = factory.createConnection(user, password);
+    	connection.start();
+    	Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    	Destination dest = new StompJmsDestination(destination);
+    	MessageProducer producer = session.createProducer(dest);
+    	producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+
+    	System.out.println("Sending messages to " + queue + "...");
+    	BookOrders orderMsg = new BookOrders();
+    	orderMsg.setIsbn(isbn);
+    	orderMsg.setLibraryName(libraryName);   
+    	String data = orderMsg.getLibraryName()+":"+orderMsg.getIsbn();
+    	
+    	TextMessage msg = session.createTextMessage(data);
+    	msg.setLongProperty("id", System.currentTimeMillis());
+    	producer.send(msg);    	
+    	connection.close();
+    
+	}
+    
+    private static String env(String key, String defaultValue) {
+		String rc = System.getenv(key);
+		if( rc== null ) {
+		    return defaultValue;
+		}
+		return rc;
+    }
+
+    private static String arg(int index, String defaultValue) {
+	    return defaultValue;
+    }
+
+	@DELETE
     @Path("/{isbn}")
     @Timed(name = "delete-book")
     public BookDto deleteBook(@PathParam("isbn") LongParam isbn) {
@@ -107,4 +170,3 @@ public class BookResource {
 	return bookResponse;
     }
 }
-

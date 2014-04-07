@@ -58,5 +58,7 @@ public class ProcurementService extends Service<ProcurementServiceConfiguration>
 	log.debug("Queue name is {}. Topic is {}", queueName, topicName);
 	// TODO: Apollo STOMP Broker URL and login
 
+
+
     }
 }

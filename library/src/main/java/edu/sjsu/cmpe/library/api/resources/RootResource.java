@@ -30,4 +30,3 @@ public class RootResource {
 	return Response.ok(links).build();
     }
 }
-

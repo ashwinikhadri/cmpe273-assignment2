@@ -20,7 +20,8 @@ public interface BookRepositoryInterface {
      * @return a newly created book instance with auto-generated ISBN
      */
     Book saveBook(Book newBook);
-
+   
+    
     /**
      * Retrieve an existing book by ISBN
      * 
@@ -44,4 +45,5 @@ public interface BookRepositoryInterface {
      *            an ISBN of the book to be deleted
      */
     void delete(Long isbn);
+    void addNewBook(Book book);
 }
