@@ -37,7 +37,7 @@ import edu.sjsu.cmpe.procurement.domain.ShippedBooks;
 /**
  * This job will run at every 5 minutes.
  */
-@Every("60s")
+@Every("5mn")
 public class ProcurementSchedulerJob extends Job {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private int numMessages = 0;
